@@ -3,9 +3,11 @@ package com.springboot.blog.springbootblogrestapi.controller;
 import com.springboot.blog.springbootblogrestapi.entity.Role;
 import com.springboot.blog.springbootblogrestapi.entity.SignupDto;
 import com.springboot.blog.springbootblogrestapi.entity.User;
+import com.springboot.blog.springbootblogrestapi.payload.JWTAuthResponse;
 import com.springboot.blog.springbootblogrestapi.payload.LoginDto;
 import com.springboot.blog.springbootblogrestapi.respository.RoleRepository;
 import com.springboot.blog.springbootblogrestapi.respository.UserRepository;
+import com.springboot.blog.springbootblogrestapi.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,13 +39,18 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private JwtTokenProvider tokenProvider;
+
     @PostMapping("/signin")
-    public ResponseEntity<String> authenticateUser(@RequestBody LoginDto loginDto){
+    public ResponseEntity<JWTAuthResponse> authenticateUser(@RequestBody LoginDto loginDto){
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginDto.getUsernameOrEmail(),loginDto.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        return new ResponseEntity<>("User signed-in successfully!", HttpStatus.OK);
+        // get token form tokenProvider
+        String token = tokenProvider.generateToken(authentication);
+        return new ResponseEntity<>(new JWTAuthResponse(token), HttpStatus.OK);
     }
 
     @PostMapping("/signup")
